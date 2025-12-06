@@ -1,55 +1,67 @@
-Task 2: AI Feedback System (Fynd AI Assessment)
-Overview
+# Fynd AI Intern – Task 2: AI Feedback System
 
-This project implements Task 2 of the Fynd AI Intern Take-Home Assessment.
-The goal is to build an AI-powered feedback system consisting of:
+This project implements Task 2 of the Fynd AI Intern take-home assignment.
 
-A User Dashboard for submitting ratings and reviews
+The goal is to build a small end-to-end system where:
 
-An Admin Dashboard for viewing processed feedback
+- Users can submit a rating (1–5) and a short review.
+- The backend calls an LLM to analyse that feedback.
+- The result is stored in a CSV file.
+- An admin dashboard shows all collected feedback in a table.
 
-A FastAPI backend
+There is no model training involved. The “model” is the Gemini API.
 
-A React (Vite) frontend
+---
 
-CSV-based data storage
+## 1. Architecture
 
-For every review submitted, an LLM (Gemini) generates a summary, a recommended action, and a short AI response.
+- **Frontend (React + Vite)**  
+  Single page app with two views:
+  - **User Dashboard** – form to submit rating + review and see AI analysis.
+  - **Admin Dashboard** – table with all stored feedback.
 
-Project Structure
+- **Backend (FastAPI)**  
+  Exposes two endpoints:
+  - `POST /submit_review` – accepts rating + review, calls Gemini, appends to CSV.
+  - `GET /admin_data` – returns all rows from the CSV for the admin dashboard.
+
+- **LLM**  
+  - Provider: Google Gemini (Gemini API)
+  - Model: `gemini-1.5-flash`
+  - Used to generate:
+    - `summary`
+    - `recommended_action`
+    - `ai_response`
+
+- **Storage**  
+  - Simple CSV file: `backend/data/reviews.csv`
+
+---
+
+## 2. Project Structure
+
+```text
 task2/
   backend/
-    main.py
-    prompts.py
+    main.py          # FastAPI app
+    prompts.py       # LLM prompt template
     requirements.txt
     data/
-      reviews.csv
-    .env
+      reviews.csv    # created automatically after first submission
+    .env             # contains GEMINI_API_KEY (not committed)
   frontend/
-    src/
-      App.jsx
-      main.jsx
-    index.html
-    package.json
-readme.md
+    frontend/        # Vite React app (created by Vite)
+      src/
+        App.jsx
+        main.jsx
+      index.html
+      package.json
+  README.md
 
+3. LLM Prompt
 
-LLM Model Used
+The backend uses a simple template:
 
-Model: gemini-2.0-flash
-API Endpoint:
-https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent
-
-The model is not used for prediction.
-It is used to generate:
-
-A summary
-
-A recommended action
-
-A friendly AI reply
-
-Prompt Used
 You are an AI assistant helping a business understand customer feedback.
 
 Given:
@@ -66,15 +78,16 @@ Return a JSON object with:
 }
 
 Rules:
-- The output must be valid JSON
-- No markdown or extra explanation
+- Output must be valid JSON.
+- Do not include markdown or extra explanation.
 
-Backend Setup (FastAPI)
 
-Navigate to backend:
+The {rating} and {review_text} placeholders are filled in at runtime.
 
-cd task2/backend
 
+4. Running the Backend (FastAPI)
+
+From the task2/backend folder:
 
 Create and activate a virtual environment:
 
@@ -87,26 +100,27 @@ Install dependencies:
 pip install -r requirements.txt
 
 
-Create a .env file containing:
+Create a .env file with your Gemini key:
 
 GEMINI_API_KEY=YOUR_KEY_HERE
 
 
-Run the backend:
+Start the server:
 
 uvicorn main:app --reload
 
 
-Backend URL:
-http://127.0.0.1:8000
+Backend will run at:
 
-API documentation:
-http://127.0.0.1:8000/docs
+API root: http://127.0.0.1:8000
+
+Docs: http://127.0.0.1:8000/docs
 
 API Endpoints
+
 POST /submit_review
 
-Input:
+Request body:
 
 {
   "rating": 5,
@@ -114,106 +128,101 @@ Input:
 }
 
 
-Output example:
+Response example:
 
 {
   "timestamp": "2025-12-06 21:07:18",
   "rating": 5,
   "review": "The food was great but the service was slow.",
-  "summary": "The customer enjoyed the food but felt the service could improve.",
+  "summary": "The customer enjoyed the food but felt service was slow.",
   "recommended_action": "Improve service speed.",
-  "ai_response": "Thanks for sharing! We appreciate your feedback."
+  "ai_response": "Thanks for sharing your feedback. We'll work on our service speed."
 }
+
 
 GET /admin_data
 
-Returns all stored entries from reviews.csv in JSON format.
+Returns all rows from backend/data/reviews.csv as JSON.
 
-Frontend Setup (React + Vite)
+5. Running the Frontend (React + Vite)
 
-Navigate to the frontend folder:
-
-cd task2/frontend
-
+From the task2/frontend/frontend folder:
 
 Install dependencies:
 
 npm install
 
 
-Start the development server:
+Start the dev server:
 
 npm run dev
 
 
-Runs at:
-http://localhost:5173
+The app will be available at http://localhost:5173.
 
-Update API URL
+The frontend uses a constant in App.jsx to talk to the backend:
 
-Before deployment, update API_BASE inside App.jsx:
+const API_BASE = "http://127.0.0.1:8000";
 
-const API_BASE = "YOUR_DEPLOYED_BACKEND_URL";
 
-Dashboards
+For deployment, this can be changed to the deployed backend URL.
+
+6. Dashboards
 User Dashboard
 
-Select rating
+Dropdown for rating (1–5).
 
-Submit review
+Textarea for review.
 
-Receives:
+On submit:
 
-Summary
+Sends rating and review to /submit_review.
 
-Recommended action
-
-AI response
+Displays returned summary, recommended_action, and ai_response.
 
 Admin Dashboard
 
-Shows all stored entries including:
+Fetches /admin_data.
 
-Timestamp
+Shows a table with:
 
-Rating
+timestamp
 
-Review
+rating
 
-Summary
+review
 
-Recommended action
+summary
 
-AI response
+recommended_action
 
-Data Storage
+ai_response
 
-All feedback is stored in:
+7. Data Storage
+
+All feedback is appended to:
 
 backend/data/reviews.csv
 
 
-A CSV file was chosen for simplicity and transparency.
+Using CSV keeps the solution simple, easy to inspect, and enough for this assignment.
 
-Deployment
+8. Notes
 
-Backend will be deployed using Render or Railway.
-Frontend will be deployed using Netlify or Vercel.
+.env, venv, and node_modules are intentionally not tracked by Git.
 
-Completion
+The project is designed to be deployable:
 
-This project completes all requirements of Task 2, including:
+Backend on a free FastAPI host (e.g. Render/Railway).
 
-Fully working User Dashboard
+Frontend on Netlify/Vercel, with API_BASE updated to the backend URL.
 
-Fully working Admin Dashboard
 
-AI integration
+---
 
-Persistent data storage
+If you want, next we can:
 
-Clear API design
+- Tweak a line or two to match **exactly** how you want to describe yourself (e.g. add your name), or  
+- Move straight to **deployment steps** (Render for backend, Netlify for frontend).
+::contentReference[oaicite:0]{index=0}
 
-Frontend and backend separation
-
-End of README
