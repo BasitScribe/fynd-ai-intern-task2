@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 
-const API_BASE = "http://127.0.0.1:8000";
+const API_BASE = "https://fynd-ai-feedback-backend.onrender.com";
 
 function UserDashboard() {
   const [rating, setRating] = useState(5);
